@@ -179,7 +179,8 @@ def find_recoding(guid):
 
     for r in voctoweb_event['recordings']:
         # select mp4 which contains only the orginal language
-        if r['mime_type'] == 'video/mp4' and r['language'] == voctoweb_event['original_language']:
+        if r['folder'] == 'h264-hd' and r['mime_type'] == 'video/mp4' and r['language'] == voctoweb_event['original_language']:
+            # and 'slides' not in r['folder']:
             results.append(r)
 
     if len(results) > 1:
