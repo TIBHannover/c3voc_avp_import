@@ -18,15 +18,15 @@ parser.add_argument('--upload', action='store_true')
 parser.add_argument('--verbose',  '-v', action='store_true', default=False)
 args = parser.parse_args() 
 
-# lxml does only supports http and not https, compare https://stackoverflow.com/a/26164472
+# lxml does only support http and not https, compare https://stackoverflow.com/a/26164472
 #schedule = etree.fromstring(requests.get("https://events.ccc.de/congress/2017/Fahrplan/schedule.xml").content)
 #schedule = lxml.etree.parse("temp/schedule.xml")
 schedule = lxml.etree.parse(args.schedule)
 
 
-# for new conferences we can use header field
+# for new conferences we can use a header field
 frab_base_url = schedule.find('conference').find('base_url').text
-# but older conferences might manuall setting:
+# but for older conferences the url has to given manually:
 #frab_base_url = 'https://events.ccc.de/congress/2017/Fahrplan/'
 
 acronym = schedule.find('conference').find('acronym').text
@@ -104,7 +104,6 @@ def main():
 
 
         # see https://github.com/voc/scripts/blob/master/slides/get_attachments.py
-        # future TODO: upload pdf's from frab to ftp host
         material = []
         if os.path.isfile('temp/{0}/_{0}_.pdf'.format(slug)):
             material.append(('File', 'Slides as PDF', '_{}_.pdf'.format(slug)))
