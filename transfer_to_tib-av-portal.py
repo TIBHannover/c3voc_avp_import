@@ -7,6 +7,7 @@ import ftputil, urllib, shutil
 import configparser, argparse
 import requests
 import cgi
+import json
 
 cp = configparser.ConfigParser()
 cp.read('tib.conf')
@@ -171,12 +172,23 @@ def main():
 
 def find_recoding(guid):
     # request event + recordings from voctoweb aka media.ccc.de
-    voctoweb_event = requests.get('https://media.ccc.de/public/events/' + guid).json()
+    voctoweb_url = 'https://media.ccc.de/public/events/' + guid
+    voctoweb_event = requests.get(voctoweb_url).json()
+
+    results = []
 
     for r in voctoweb_event['recordings']:
         # select mp4 which contains only the orginal language
         if r['mime_type'] == 'video/mp4' and r['language'] == voctoweb_event['original_language']:
-            return r
+            results.append(r)
+
+    if len(results) > 1:
+        sys.stderr.write("\033[91mFATAL: API returned multiple recordings: {} \033[0m\n".format(voctoweb_url))
+        sys.stderr.write(json.dumps(results, indent=4))
+        exit()
+
+    elif len(results) == 1:
+        return results[0]
 
     return None
 
