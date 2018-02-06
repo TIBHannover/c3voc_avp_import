@@ -1,6 +1,6 @@
 # CCC Download Script
 
-This script collection transfers videos from CCC conferences, according to the given schedule, as well as their metadata and supplements (e.g., PDF slides) to the FTP server of the TIB AV Portal.
+This script collection transfers [videos from CCC conferences](https://media.ccc.de/), according to the given schedule, as well as their metadata and supplements (e.g., PDF slides) to the FTP server of the [TIB AV Portal](https://av.tib.eu/).
 
 For proper working of the scripts, `./schedule.xml` and `./data/schedule_[conference name].xml` files (e.g., `schedule_34c3.xml`) should be available. FTP username and password are required as well and should be adapted in the configuration. I.e., the final directory structure should be something like following:
 
