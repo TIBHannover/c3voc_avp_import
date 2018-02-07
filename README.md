@@ -26,4 +26,4 @@ Without FTP (dry run, only metadata and supplements will be downloaded):
 
     ./dryrun.sh
 
-All of the metadata and supplements will be saved into the 'temp' directory, which will be created if non-existent by either of the shell scripts.
+All of the metadata and supplements will be saved into the 'temp' directory, which will be created if it doesn't exist yet by either of the shell scripts.
