@@ -7,6 +7,7 @@ import ftputil, urllib, shutil
 import configparser, argparse
 import requests
 import cgi
+import json
 
 cp = configparser.ConfigParser()
 cp.read('tib.conf')
@@ -18,15 +19,15 @@ parser.add_argument('--upload', action='store_true')
 parser.add_argument('--verbose',  '-v', action='store_true', default=False)
 args = parser.parse_args() 
 
-# lxml does only supports http and not https, compare https://stackoverflow.com/a/26164472
+# lxml does only support http and not https, compare https://stackoverflow.com/a/26164472
 #schedule = etree.fromstring(requests.get("https://events.ccc.de/congress/2017/Fahrplan/schedule.xml").content)
 #schedule = lxml.etree.parse("temp/schedule.xml")
 schedule = lxml.etree.parse(args.schedule)
 
 
-# for new conferences we can use header field
+# for new conferences we can use a header field
 frab_base_url = schedule.find('conference').find('base_url').text
-# but older conferences might manuall setting:
+# but for older conferences the url has to given manually:
 #frab_base_url = 'https://events.ccc.de/congress/2017/Fahrplan/'
 
 acronym = schedule.find('conference').find('acronym').text
@@ -104,7 +105,6 @@ def main():
 
 
         # see https://github.com/voc/scripts/blob/master/slides/get_attachments.py
-        # future TODO: upload pdf's from frab to ftp host
         material = []
         if os.path.isfile('temp/{0}/_{0}_.pdf'.format(slug)):
             material.append(('File', 'Slides as PDF', '_{}_.pdf'.format(slug)))
@@ -172,12 +172,24 @@ def main():
 
 def find_recoding(guid):
     # request event + recordings from voctoweb aka media.ccc.de
-    voctoweb_event = requests.get('https://media.ccc.de/public/events/' + guid).json()
+    voctoweb_url = 'https://media.ccc.de/public/events/' + guid
+    voctoweb_event = requests.get(voctoweb_url).json()
+
+    results = []
 
     for r in voctoweb_event['recordings']:
         # select mp4 which contains only the orginal language
-        if r['mime_type'] == 'video/mp4' and r['language'] == voctoweb_event['original_language']:
-            return r
+        if r['folder'] == 'h264-hd' and r['mime_type'] == 'video/mp4' and r['language'] == voctoweb_event['original_language']:
+            # and 'slides' not in r['folder']:
+            results.append(r)
+
+    if len(results) > 1:
+        sys.stderr.write("\033[91mFATAL: API returned multiple recordings: {} \033[0m\n".format(voctoweb_url))
+        sys.stderr.write(json.dumps(results, indent=4))
+        exit()
+
+    elif len(results) == 1:
+        return results[0]
 
     return None
 
