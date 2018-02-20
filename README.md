@@ -1,4 +1,4 @@
-# CCC Download Script
+# C3VOC <-> AV Portal Download and Import Script
 
 This script collection transfers [videos from CCC conferences](https://media.ccc.de/), according to the given schedule, as well as their metadata and supplements (e.g., PDF slides) to the FTP server of the [TIB AV Portal](https://av.tib.eu/).
 
