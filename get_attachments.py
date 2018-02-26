@@ -1,19 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
- 
-import sys, os
+
+import argparse
+import getpass
+import os
+import pycurl
+import sys
 import time
 import urllib
-import requests
+from cStringIO import StringIO
 from datetime import datetime
 
-import getpass
-import pycurl
-from lxml import etree
-from cStringIO import StringIO
-
 import configparser
-import argparse
+import requests
+from lxml import etree
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -30,37 +30,31 @@ parser.add_argument('--published', action='store_true', default=False)
 
 args = parser.parse_args()
 
-
-offline = args.offline # True -> Schedules nicht von frab.cccv.de herunterladen (benötigt Account)
-
+offline = args.offline  # True -> Schedules nicht von frab.cccv.de herunterladen (benötigt Account)
 
 LOGIN_HOST = "https://frab.cccv.de"
 
 ACRONYMS = [
-#            "17c3", "18c3",
-#            "19c3", "20c3", "21c3",
-#            "22c3", "23c3", "24c3", "25c3", "26c3", "27c3", "28c3",
-#            "29c3", "30c3", "31c3", "32c3",
-#            "camp2011", "camp2015",
-#            "33c3",
-             "34c3"
-            ][::-1]
-
+               #            "17c3", "18c3",
+               #            "19c3", "20c3", "21c3",
+               #            "22c3", "23c3", "24c3", "25c3", "26c3", "27c3", "28c3",
+               #            "29c3", "30c3", "31c3", "32c3",
+               #            "camp2011", "camp2015",
+               #            "33c3",
+               "34c3"
+           ][::-1]
 
 LANG_MAP = {
-    "en" : "eng",
-    "de" : "deu"
+    "en": "eng",
+    "de": "deu"
 }
-
 
 LOGIN_URL = "%s/users/sign_in" % (LOGIN_HOST)
 LOGIN_SUBMIT = "%s/users/sign_in?locale=en" % (LOGIN_HOST)
 # https://frab.cccv.de/en/17c3/public/schedule.xml
 SCHEDULE_URL = "%s/en/%s/public/schedule.xml"
 
-
 dry_run = True
-
 
 '''
 frab login code kommt von fahrplan deploy skript von nexus
@@ -82,7 +76,7 @@ def setupCurl(curl, url):
     '''
     buf = StringIO()
     curl.setopt(pycurl.TIMEOUT, 1)
-    curl.setopt(pycurl.COOKIEFILE, './temp.txt') # Turn on cookies
+    curl.setopt(pycurl.COOKIEFILE, './temp.txt')  # Turn on cookies
     curl.setopt(pycurl.URL, url)
     curl.setopt(pycurl.WRITEFUNCTION, buf.write)
     # curl.setopt(pycurl.HEADERFUNCTION, header)
@@ -91,6 +85,7 @@ def setupCurl(curl, url):
     # curl.setopt(pycurl.SSL_VERIFYPEER, 0)
     curl.setopt(pycurl.POST, 0)
     return buf
+
 
 def acquireToken(curl):
     '''
@@ -108,7 +103,8 @@ def acquireToken(curl):
     tree = etree.parse(buf, parser=parser, base_url=LOGIN_URL)
     token = tree.xpath(".//meta[@name='csrf-token']")
     return token[0].attrib["content"]
-    
+
+
 def login(curl, token, username, password):
     '''
     Perform login on website.
@@ -117,14 +113,16 @@ def login(curl, token, username, password):
     @type password: str
     @type curl: pycurl.Curl
     '''
-        
+
     print "login with token %s" % token
     setupCurl(curl, LOGIN_SUBMIT)
     curl.setopt(pycurl.POST, 1)
-    curl.setopt(pycurl.POSTFIELDS, "authenticity_token=%s&user[email]=%s&user[password]=%s" % (token, username, password))
+    curl.setopt(pycurl.POSTFIELDS,
+                "authenticity_token=%s&user[email]=%s&user[password]=%s" % (token, username, password))
     print "POST %s" % (LOGIN_SUBMIT)
     curl.perform()
     assert curl.getinfo(pycurl.HTTP_CODE) == 302, "failed to login"
+
 
 def download(curl, conference_acronym):
     '''
@@ -132,11 +130,10 @@ def download(curl, conference_acronym):
     
     @type curl: pycurl.Curl
     '''
-    
-    #url = "https://frab.cccv.de/en/17c3/public/schedule.xml"
+
+    # url = "https://frab.cccv.de/en/17c3/public/schedule.xml"
     url = SCHEDULE_URL % (LOGIN_HOST, conference_acronym)
 
-    
     print"download %s schedule" % (conference_acronym)
     buf = setupCurl(curl, url)
     curl.setopt(pycurl.TIMEOUT, 6000)
@@ -145,19 +142,14 @@ def download(curl, conference_acronym):
     if curl.getinfo(pycurl.HTTP_CODE) != 200:
         print buf.getvalue()
     assert curl.getinfo(pycurl.HTTP_CODE) == 200, "failed to download schedule"
-    
-    #print "store schedule to disk"
-    dumpfile = open("data/schedule_" + conference_acronym + ".xml", "w")   
+
+    # print "store schedule to disk"
+    dumpfile = open("data/schedule_" + conference_acronym + ".xml", "w")
     dumpfile.write(buf.getvalue())
     dumpfile.close()
     buf.reset()
-    
+
     return buf
-
-    
-
-    print("done")
-
 
 if __name__ == '__main__':
     curl = pycurl.Curl()
@@ -168,9 +160,9 @@ if __name__ == '__main__':
         PASSWORD = getpass.getpass()
         login(curl, token, USERNAME, PASSWORD)
         time.sleep(6)
-        
+
     ul = urllib.URLopener()
-    
+
     for conference in ACRONYMS:
         schedule = None
         if offline:
@@ -179,7 +171,8 @@ if __name__ == '__main__':
                 schedule = etree.fromstring(buf).getroottree()
         elif args.published:
 
-            schedule = etree.fromstring(requests.get("http://events.ccc.de/congress/2017/Fahrplan/schedule.xml").content)
+            schedule = etree.fromstring(
+                requests.get("http://events.ccc.de/congress/2017/Fahrplan/schedule.xml").content)
         else:
             # download current (probably not published version) from frab
             buf = download(curl, conference)
@@ -199,30 +192,29 @@ if __name__ == '__main__':
 
             pdf_count = 0
             pdfs = []
-            #from 2
+            # from 2
             download_urls = []
             for attachment in attachments:
                 basename = os.path.basename(attachment.attrib['href']).split('?')[0]
                 ext = os.path.splitext(basename)[1][1:].lower()
-                
+
                 # skip specific files
                 if ext == "torrent" or basename == "missing.png":
-                    #if args.verbose: print('   ignoring: ' + basename)
+                    # if args.verbose: print('   ignoring: ' + basename)
                     count_missing += 1
                     continue
 
                 title = attachment.text
 
-                str =  (title + basename).lower()
+                str = (title + basename).lower()
                 if 'abstract' in str or 'paper' in str or 'bierzerlegung' in str:
                     if args.verbose: print('   ignoring: ' + basename)
                     continue
 
-                file_path, time  = attachment.attrib['href'].split('?')
+                file_path, time = attachment.attrib['href'].split('?')
                 time = int(time)
                 if time > max_time:
                     max_time = time
-
 
                 if ext == "pdf" and time > args.since:
                     pdf_count += 1
@@ -231,8 +223,8 @@ if __name__ == '__main__':
 
                     file_url = LOGIN_HOST + file_path
                     if args.verbose: print('   ' + file_url + '\n')
-                    
-                    #from 2
+
+                    # from 2
                     download_urls.append(file_url)
 
                 else:
@@ -241,18 +233,18 @@ if __name__ == '__main__':
 
             if pdf_count > 1:
                 print("     WARNING: multiple (%d) pdf files" % pdf_count)
-                target_folder = "temp"#/34c3"# + attachments.xpath('../slug')[0].text.strip()
-                print('TARGET '+target_folder)                
+                target_folder = "temp"  # /34c3"# + attachments.xpath('../slug')[0].text.strip()
+                print('TARGET ' + target_folder)
                 for url in download_urls:
                     try:
-                        #ul.retrieve(url, target_folder)# + '/' + os.path.basename(url))
+                        # ul.retrieve(url, target_folder)# + '/' + os.path.basename(url))
                         ul.retrieve(url, target_folder + '/')
                     except IOError:
                         sys.stderr.write('cannot download ' + url)
             elif pdf_count == 1:
                 try:
                     print('trying to download: ' + download_urls[0])
-                    #ul.retrieve(download_urls[0], "temp/34c3" + attachments.xpath('../slug')[0].text.strip() + ".pdf")
+                    # ul.retrieve(download_urls[0], "temp/34c3" + attachments.xpath('../slug')[0].text.strip() + ".pdf")
                     filename = attachments.xpath('../slug')[0].text.strip()
                     print(filename)
                     if not os.path.exists("temp/" + filename):
@@ -263,7 +255,9 @@ if __name__ == '__main__':
             else:
                 print("     slides pdf missing!")
 
-
         if args.verbose: print('')
-        print("{}: {:3d} events with attachments, and {:3d} missing.png – last change {}".format(conference, count, count_missing, datetime.fromtimestamp(max_time)))
+        print("{}: {:3d} events with attachments, and {:3d} missing.png – last change {}".format(conference, count,
+                                                                                                 count_missing,
+                                                                                                 datetime.fromtimestamp(
+                                                                                                     max_time)))
         if args.verbose: print('')
