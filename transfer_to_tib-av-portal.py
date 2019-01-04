@@ -81,10 +81,10 @@ def main():
 
     if mediaccc:
       # request recording from voctoweb aka media.ccc.de
-      recording = find_recoding(event.attrib['guid'])
-      if recording != False:
+      try:
+        recording = find_recoding(event.attrib['guid'])
         file_url = recording['recording_url']
-      else:
+      except:
         file_url = False
     else:
       # download file directly from our intermediate upload host. But not for C3...
@@ -143,6 +143,12 @@ def main():
     except:
       sys.stderr.write(" \033[91mWARNING: Track not found. \033[0m\n")
 
+    links = []
+    try:
+      links = event.find('links')
+    except:
+      sys.stderr.write(" \033[91mWARNING: Links not found. \033[0m\n")
+
     if dry_run:
       if not os.path.exists("temp/{0}".format(slug)):
         os.mkdir("temp/{0}".format(slug))
@@ -164,14 +170,18 @@ def main():
                    + lang + '''"><![CDATA[''' \
                    + abstract + ''']]></description></descriptions>'''
 
-      metadata = metadata + '''<additionalMaterials>''' + \
-                 '\n    '.join([
+      metadata = metadata + '''<additionalMaterials>'''
+
+      if material is not None:
+        metadata = metadata + '\n    '.join([
                                  '<additionalMaterial additionalMaterialType="{a[0]}" additionalMaterialTitle="{a[1]}" relationType="isSupplementedBy">{a[2]}</additionalMaterial>'.format(
-                                   a=a) for a in material]) + \
-                 '\n    '.join([
+                                   a=a) for a in material])
+      if links is not None:
+        metadata = metadata + '\n    '.join([
                                  '<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="{0}" relationType="isSupplementedBy">{1}</additionalMaterial>'.format(
-                                   a.text.encode('utf-8').strip(), (a.attrib['href']).encode('utf-8').strip()) for a in event.find('links')]) + \
-                 '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/''' + slug + '''</additionalMaterial>'''
+                                   a.text.encode('utf-8').strip(), (a.attrib['href']).encode('utf-8').strip()) for a in links])
+
+      metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/''' + slug + '''</additionalMaterial>'''
 
       if link != '':
         metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="fahrplan.events.ccc.de" relationType="isCitedBy">''' + link + '''</additionalMaterial>'''
