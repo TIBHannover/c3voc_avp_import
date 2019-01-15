@@ -1,20 +1,26 @@
 # C3VOC <-> AV Portal Download Script
 
-This script collection downloads [videos from CCC conferences](https://media.ccc.de/), according to the given schedule, as well as their metadata and supplements (e.g., PDF slides) for the [TIB AV Portal](https://av.tib.eu/).
+This script collection downloads [videos from CCC conferences](https://media.ccc.de/), 
+according to the given schedule, as well as their metadata and supplements (e.g., PDF slides) 
+for the [TIB AV Portal](https://av.tib.eu/).
 
-For proper working of the scripts, `./schedule.xml` and `./data/schedule_[conference name].xml` files (e.g., `schedule_34c3.xml`) should be available. I.e., the final directory structure should be something like the following:
+For proper working of the scripts, a schedule file of the conference, the "Fahrplan", usually: `schedule.xml`,
+should be available and put into the root directory (but any other path works too). 
+I.e., the final directory structure, before the download can start, should be something like the following:
 
     ccc_avp_import/
-    ├── data
-    │   └── schedule_34c3.xml
     ├── download.sh
     ├── get_attachments.py
+    ├── get_videos_and_xml.py
     ├── README.md
-    ├── schedule.xml
-    └── transfer_to_tib-av-portal.py
+    └── schedule.xml
+
+A list of currently published schedules is available 
+under [https://c3voc.de/wiki/events_tib](https://c3voc.de/wiki/events_tib).
 
 ## Usage
 
-    ./download.sh
+    ./download.sh <path to schedule file>
 
-All of the metadata and supplements will be saved into the 'temp' directory, which will be created if it doesn't exist yet.
+All of the videos, metadata, and supplements will be saved into the `videos` directory, 
+which will be created if it doesn't exist yet.

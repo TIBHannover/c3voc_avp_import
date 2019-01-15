@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mkdir -pv videos && ./get_attachments.py $1 --verbose && ./transfer_to_tib-av-portal.py $1 --verbose
+mkdir -pv videos && ./get_attachments.py $1 --verbose && ./get_videos_and_xml.py $1 --verbose
