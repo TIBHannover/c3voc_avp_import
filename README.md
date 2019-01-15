@@ -18,6 +18,10 @@ I.e., the final directory structure, before the download can start, should be so
 A list of currently published schedules is available 
 under [https://c3voc.de/wiki/events_tib](https://c3voc.de/wiki/events_tib).
 
+You will also need to install additional python modules to run the scripts. You can install them either with `pip` 
+or the package manager of your OS, e.g., `sudo apt install python-pycurl`. In the best case, you have all of them 
+installed already, so that the script won't complain.
+
 ## Usage
 
     ./download.sh <path to schedule file>
