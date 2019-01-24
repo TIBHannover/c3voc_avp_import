@@ -82,6 +82,7 @@ def main():
             recording = find_recoding(event.attrib['guid'])
             file_url = recording['recording_url']
         except:
+            sys.stderr.write(' INFO: Using alternative video repository (live.ber.c3voc.de).\n')
             file_url = 'http://live.ber.c3voc.de/releases/{}/{}-hd.mp4'.format(acronym, event_id)
 
         # open file url
@@ -227,7 +228,7 @@ def find_recoding(guid):
             if len(results) > 1:
                 sys.stderr.write('\033[91mFATAL: API returned multiple recordings: {} \033[0m\n'.format(voctoweb_url))
                 sys.stderr.write(json.dumps(results, indent=4))
-                exit()
+                return False
             elif len(results) == 1:
                 return results[0]
 
