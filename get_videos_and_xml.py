@@ -3,7 +3,9 @@
 
 import argparse
 import json
+import magic
 import os
+import shutil
 import sys
 import urllib
 
@@ -14,7 +16,6 @@ import requests
 
 parser = argparse.ArgumentParser(description='TIB AV Portal: Upload and metadata generation ')
 parser.add_argument('schedule', help='schedule.xml file name', default='schedule.xml')
-parser.add_argument('--mediaccc', action='store_true', default=True)
 parser.add_argument('--verbose', '-v', action='store_true', default=False)
 args = parser.parse_args()
 
@@ -23,8 +24,6 @@ args = parser.parse_args()
 # schedule = lxml.etree.parse("temp/schedule.xml")
 schedule = lxml.etree.parse(args.schedule)
 
-mediaccc = args.mediaccc
-
 acronym = schedule.find('conference').find('acronym').text
 
 # TODO: use argument parser?
@@ -32,8 +31,11 @@ ignore_license = True
 
 download_dir = 'videos'
 
+mime = magic.Magic(mime=True)
+
 
 def main():
+    errors = []
     for event_id in schedule.xpath(u'day/room/event/@id'):
         event = schedule.xpath('day/room/event[@id="' + event_id + '"]')[0]
         slug = event.find('slug').text.encode('utf-8').strip()
@@ -58,32 +60,48 @@ def main():
         except:
             sys.stderr.write(' \033[91mWARNING: Link not found. \033[0m\n')
 
-        if event.find('recording').find('optout').text == 'true':
-            sys.stderr.write(' INFO: Ignoring '' + title + '' due to optout\n')
+        try:
+            optout = event.find('recording').find('optout').text
+        except:
+            sys.stderr.write(' \033[91mERROR: No optout information for ' + title + ' \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + title + '" : No optout information found.')
+            continue
+
+        if optout == 'true':
+            sys.stderr.write(' \033[91mERROR: Ignoring ' + title + ' due to optout. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + title + '" : Ignored due to optout.')
             continue
 
         if not ignore_license and event.find('recording').find('license').text is None:
-            sys.stderr.write(' \033[91mERROR: ' + title + ' has empty recording license \033[0m\n')
+            sys.stderr.write(' \033[91mERROR: ' + title + ' has empty recording license. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + title + '" : Empty recording license.')
             continue
 
-        if mediaccc:
-            # request recording from voctoweb aka media.ccc.de
-            try:
-                recording = find_recoding(event.attrib['guid'])
-                file_url = recording['recording_url']
-            except:
-                file_url = False
-        else:
-            # download file directly from our intermediate upload host. But not for C3...
+        # request recording from voctoweb aka media.ccc.de
+        try:
+            recording = find_recoding(event.attrib['guid'])
+            file_url = recording['recording_url']
+        except:
             file_url = 'http://live.ber.c3voc.de/releases/{}/{}-hd.mp4'.format(acronym, event_id)
 
         # open file url
+        download_path = download_dir + '/{0}'.format(slug)
         try:
-            if not os.path.exists(download_dir + '/{0}'.format(slug)):
-                os.mkdir(download_dir + '/{0}'.format(slug))
-            urllib.urlretrieve(file_url, download_dir + '/{0}/{0}.mp4'.format(slug))
+            if not os.path.exists(download_path):
+                os.mkdir(download_path)
+            video_filename = download_dir + '/{0}/{0}.mp4'.format(slug)
+            urllib.urlretrieve(file_url, video_filename)
+            mime_type = mime.from_file(video_filename)
+            if mime_type != 'video/mp4':
+                shutil.rmtree(download_path)
+                sys.stderr.write(' \033[91mERROR: ' + title + ' : Video is not valid mp4. \033[0m\n')
+                errors.append('ERROR: ' + event_id + ' : "' + title + '" : Video is not valid mp4.')
+                continue
         except:
+            if os.path.exists(download_path):
+                shutil.rmtree(download_path)
             sys.stderr.write(' \033[91mERROR: HTTPError ocurred. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + title + '" : HTTPError ocurred.')
             continue
 
         # format person names to library conventions – random search result:
@@ -135,8 +153,6 @@ def main():
         except:
             sys.stderr.write(' \033[91mWARNING: Links not found. \033[0m\n')
 
-        if not os.path.exists(download_dir + '/{0}'.format(slug)):
-            os.mkdir(download_dir + '/{0}'.format(slug))
         with open(download_dir + '/{0}/{0}.xml'.format(slug), 'wt') as f:
             # TODO: Test if XML generation via external library e.g. via LXML produces nicer code
             metadata = '''<?xml version="1.0" encoding="UTF-8" ?>
@@ -178,6 +194,10 @@ def main():
             <publicationYear>2017</publicationYear></resource>'''
 
             f.write(metadata)
+
+    if errors != '':
+        with open('errors_' + acronym + '.txt', 'w') as error_file:
+            error_file.write('\n'.join(errors))
 
 
 def find_recoding(guid):
