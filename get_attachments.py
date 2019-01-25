@@ -130,7 +130,7 @@ if __name__ == '__main__':
         count += 1
 
         event = attachments.xpath('..')[0]
-        slug = event.find('slug').text
+        slug = event.find('slug').text.encode('utf-8').strip()
 
         if args.verbose:
             print(slug)
@@ -149,12 +149,12 @@ if __name__ == '__main__':
                 count_missing += 1
                 continue
 
-            title = attachment.text
+            title = attachment.text.encode('utf-8').strip()
 
             title_basename = (title + basename).lower()
             if 'abstract' in title_basename or 'paper' in title_basename or 'bierzerlegung' in title_basename:
                 if args.verbose:
-                    print('   ignoring: ' + basename)
+                    print('   ignoring: ' + basename).encode('utf-8').strip()
                 continue
 
             file_path, time = attachment.attrib['href'].split('?')
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                 pdf_count += 1
                 # presentation, slide, folien
                 if args.verbose:
-                    print('   ' + ', '.join([ext, title, basename]))
+                    print('   ' + ', '.join([ext, title, basename])).encode('utf-8').strip()
 
                 file_url = LOGIN_HOST + file_path
                 if args.verbose:
