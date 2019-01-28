@@ -39,5 +39,9 @@ installed already, so that the script won't complain. Following dependencies are
     -f (path to local schedule)
     -l (URL of the schedule)
 
+### Example
+
+    ./download.sh -l https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
+
 All of the videos, metadata, and supplements will be saved into the `videos` directory, 
 which will be created if it doesn't exist yet.
