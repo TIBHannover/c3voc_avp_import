@@ -18,6 +18,9 @@ I.e., the final directory structure, before the download can start, should be so
 A list of currently published schedules is available 
 under [https://c3voc.de/wiki/events_tib](https://c3voc.de/wiki/events_tib).
 
+It is also possible to use the URL of the schedule, e.g., by copying it from the list above 
+(see Usage section).
+
 ## Dependencies
 
 You will also need to install additional python modules to run the scripts. You can install them either with `pip` 
@@ -29,7 +32,12 @@ installed already, so that the script won't complain. Following dependencies are
     
 ## Usage
 
-    ./download.sh <path to schedule file>
+    ./download.sh [option] [schedule]
+
+### Available Options
+
+    -f (path to local schedule)
+    -l (URL of the schedule)
 
 All of the videos, metadata, and supplements will be saved into the `videos` directory, 
 which will be created if it doesn't exist yet.
