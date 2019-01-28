@@ -18,8 +18,7 @@ I.e., the final directory structure, before the download can start, should be so
 A list of currently published schedules is available 
 under [https://c3voc.de/wiki/events_tib](https://c3voc.de/wiki/events_tib).
 
-It is also possible to use the URL of the schedule, e.g., by copying it from the list above 
-(see Usage section).
+It is also possible to use the URL of the schedule, e.g., by copying it from the list above. In this case, the schedule will be temporarily saved and deleted after the videos have been downloaded. (see also Usage section)
 
 ## Dependencies
 
@@ -39,9 +38,16 @@ installed already, so that the script won't complain. Following dependencies are
     -f (path to local schedule)
     -l (URL of the schedule)
 
-### Example
+### Examples
+
+Remote schedule (will be automatically removed after the video download process is complete)
 
     ./download.sh -l https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
+
+Download and use local schedule
+
+    wget https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
+    ./download.sh -f schedule.xml
 
 All of the videos, metadata, and supplements will be saved into the `videos` directory, 
 which will be created if it doesn't exist yet.
