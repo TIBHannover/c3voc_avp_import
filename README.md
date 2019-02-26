@@ -57,12 +57,12 @@ If NOT installed
 
 Remote schedule (will be automatically removed after the video download process is complete)
 
-    ./download.sh -l https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
+    ccc_download -l https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
 
 Download and use local schedule
 
     wget https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
-    ./download.sh -f schedule.xml
+    ./ccc_download -f schedule.xml
 
 All of the videos, metadata, and supplements will be saved into the `videos_c3voc` directory, 
 which will be created if it doesn't exist yet.
