@@ -1,0 +1,22 @@
+#!/bin/bash
+
+run_download() {
+    if [[ -z $(which get_attachments.py) && -z $(which get_videos_and_xml.py) ]]; then
+        echo "local"
+        ./get_attachments.py $1 --verbose && ./get_videos_and_xml.py $1 --verbose
+    else
+        echo "global"
+        get_attachments.py $1 --verbose && get_videos_and_xml.py $1 --verbose
+    fi
+}
+
+mkdir -pv videos_c3voc
+if [[ $1 == "-l" ]]; then
+    rand="schedule_"$RANDOM".xml"
+    wget $2 -O ${rand} && run_download ${rand}
+    rm -f ${rand}
+elif [[ $1 == "-f" ]]; then
+    run_download $2
+else
+    echo "Please use one of the following options: -l \"URL to remote schedule\" or -f \"path to local schedule\"" && exit 2
+fi

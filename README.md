@@ -9,9 +9,10 @@ should be available and put into the root directory (but any other path works to
 I.e., the final directory structure, before the download can start, should be something like the following:
 
     ccc_avp_import/
-    ├── download.sh
+    ├── ccc_download
     ├── get_attachments.py
     ├── get_videos_and_xml.py
+    ├── install.sh
     ├── README.md
     └── schedule.xml
 
@@ -30,9 +31,23 @@ installed already, so that the script won't complain. Following dependencies are
     sudo apt install python-pycurl
     pip install requests lxml python-magic
     
+## Install
+
+    ./install.sh
+
+**Installation is optional**
+
+Will install in your `/usr/local/bin`, however you can modify the path in `install.sh`.
+
 ## Usage
 
-    ./download.sh [option] [schedule]
+If installed
+
+    ccc_download [option] [schedule]
+    
+If NOT installed
+
+    ./ccc_download [option] [schedule]
 
 ### Available Options
 
