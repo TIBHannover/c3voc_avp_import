@@ -36,7 +36,7 @@ installed already, so that the script won't complain. Following dependencies are
 
 **Installation is optional**
 
-Will install in your `/usr/local/bin`, however you can modify the path in `install.sh`.
+The scripts will be installed in your `/usr/local/bin`, however you can modify the path in `install.sh`.
 
 ## Usage
 
@@ -64,5 +64,5 @@ Download and use local schedule
     wget https://fahrplan.events.ccc.de/congress/2018/Fahrplan/schedule.xml
     ./download.sh -f schedule.xml
 
-All of the videos, metadata, and supplements will be saved into the `videos` directory, 
+All of the videos, metadata, and supplements will be saved into the `videos_c3voc` directory, 
 which will be created if it doesn't exist yet.

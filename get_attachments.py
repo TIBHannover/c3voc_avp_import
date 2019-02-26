@@ -30,7 +30,7 @@ offline = args.offline  # True -> Schedules nicht von frab.cccv.de herunterladen
 
 schedule_xml = args.schedule
 
-download_dir = 'videos'
+download_dir = 'videos_c3voc'
 # TODO Als Option?
 # download_dir = args.download_dir
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import cgi
 import json
 import magic
 import os
@@ -29,9 +30,13 @@ acronym = schedule.find('conference').find('acronym').text
 # TODO: use argument parser?
 ignore_license = True
 
-download_dir = 'videos'
+download_dir = 'videos_c3voc'
 
 mime = magic.Magic(mime=True)
+
+
+def escape_html_sc(event, element):
+    return cgi.escape(event.find(element).text.encode('utf-8').strip())
 
 
 def main():
@@ -42,7 +47,7 @@ def main():
 
         title = ''
         try:
-            title = event.find('title').text.encode('utf-8').strip()
+            title = escape_html_sc(event, 'title')
             if args.verbose:
                 print('\n== ' + title)
         except:
@@ -50,7 +55,7 @@ def main():
 
         subtitle = ''
         try:
-            subtitle = event.find('subtitle').text.encode('utf-8').strip()
+            subtitle = escape_html_sc(event, 'subtitle')
         except:
             sys.stderr.write(' \033[91mWARNING: Subtitle not found. \033[0m\n')
 
@@ -93,6 +98,7 @@ def main():
             video_filename = download_dir + '/{0}/{0}.mp4'.format(slug)
             urllib.urlretrieve(file_url, video_filename)
             mime_type = mime.from_file(video_filename)
+            #print(mime_type)
             if mime_type != 'video/mp4':
                 shutil.rmtree(download_path)
                 sys.stderr.write(' \033[91mERROR: ' + title + ' : Video is not valid mp4. \033[0m\n')
@@ -109,7 +115,8 @@ def main():
         # https://books.google.de/books?id=wJyoBgAAQBAJ&pg=PA68&lpg=PA68&dq=bibliotheken+mehrere+vornamen&source=bl&ots=bP4gjj1Zft&sig=2HxD9qHWHzo7Z0kMc5vMITo83ps&hl=en&sa=X&redir_esc=y#v=onepage&q=bibliotheken%20mehrere%20vornamen&f=false
         persons = []
         for p in event.find('persons'):
-            p = p.text.split(' ')
+            p = cgi.escape(p.text)
+            p = p.split(' ')
             if len(p) > 3:
                 print('   \033[91mWARNING: Person name consists of more than three parts: ' + str(p) + '\033[0m')
             if len(p) == 1:
@@ -134,17 +141,17 @@ def main():
 
         abstract = ''
         try:
-            abstract = strip_tags(event.find('abstract').text).encode('utf-8').strip()
+            abstract = escape_html_sc(event, 'abstract')
         except:
             try:
                 # use description when abstract is empty
-                abstract = strip_tags(event.find('description').text).encode('utf-8').strip()
+                abstract = escape_html_sc(event, 'description')
             except:
                 sys.stderr.write(' \033[91mWARNING: ' + title + ' has empty abstract. \033[0m\n')
 
         track = ''
         try:
-            track = event.find('track').text.encode('utf-8').strip()
+            track = escape_html_sc(event, 'track')
         except:
             sys.stderr.write(' \033[91mWARNING: Track not found. \033[0m\n')
 
@@ -181,7 +188,7 @@ def main():
             if links is not None:
                 metadata = metadata + '\n    '.join([
                     '<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="{0}" relationType="isSupplementedBy">{1}</additionalMaterial>'.format(
-                        a.text.encode('utf-8').strip(), (a.attrib['href']).encode('utf-8').strip()) for a in links])
+                        cgi.escape(a.text.encode('utf-8').strip().replace('"', '')), (a.attrib['href']).encode('utf-8').strip()) for a in links])
 
             metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/''' +\
                        slug + '''</additionalMaterial>'''
@@ -193,7 +200,7 @@ def main():
             <keywords><keyword language="''' + lang + '''">''' + track + '''</keyword></keywords>
             <publishers><publisher><publisherName>Chaos Computer Club e.V.</publisherName></publisher></publishers>
             <publicationYear>2017</publicationYear></resource>'''
-
+            # TODO get year from event date
             f.write(metadata)
 
     if errors != '':
