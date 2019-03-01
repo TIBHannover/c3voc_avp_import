@@ -2,10 +2,9 @@
 
 run_download() {
     if [[ -z $(which get_attachments.py) && -z $(which get_videos_and_xml.py) ]]; then
-        echo "local"
+        echo "Running ccc_download from local directory context. Please consider installation (execute install.sh)."
         ./get_attachments.py $1 --verbose && ./get_videos_and_xml.py $1 --verbose
     else
-        echo "global"
         get_attachments.py $1 --verbose && get_videos_and_xml.py $1 --verbose
     fi
 }

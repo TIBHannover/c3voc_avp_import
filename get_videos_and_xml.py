@@ -43,7 +43,7 @@ def main():
     errors = []
     for event_id in schedule.xpath(u'day/room/event/@id'):
         event = schedule.xpath('day/room/event[@id="' + event_id + '"]')[0]
-        slug = event.find('slug').text.encode('utf-8').strip()
+        slug = event.find('slug').text.encode('utf-8').strip()  # slug will be escaped below in xml
 
         title = ''
         try:
@@ -51,35 +51,35 @@ def main():
             if args.verbose:
                 print('\n== ' + title)
         except:
-            sys.stderr.write(' \033[91mWARNING: Title not found. \033[0m\n')
+            sys.stderr.write(' \033[91mWARNING: ' + slug + ' Title not found. \033[0m\n')
 
         subtitle = ''
         try:
             subtitle = escape_html_sc(event, 'subtitle')
         except:
-            sys.stderr.write(' \033[91mWARNING: Subtitle not found. \033[0m\n')
+            sys.stderr.write(' \033[91mWARNING: ' + slug + ' Subtitle not found. \033[0m\n')
 
         link = ''
         try:
-            link = event.find('url').text
+            link = escape_html_sc(event, 'url')
         except:
-            sys.stderr.write(' \033[91mWARNING: Link not found. \033[0m\n')
+            sys.stderr.write(' \033[91mWARNING: ' + slug + ' Link not found. \033[0m\n')
 
         try:
             optout = event.find('recording').find('optout').text
         except:
-            sys.stderr.write(' \033[91mERROR: No optout information for ' + title + ' \033[0m\n')
-            errors.append('ERROR: ' + event_id + ' : "' + title + '" : No optout information found.')
+            sys.stderr.write(' \033[91mERROR: No optout information for ' + slug + ' \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + slug + '" : No optout information found.')
             continue
 
         if optout == 'true':
-            sys.stderr.write(' \033[91mERROR: Ignoring ' + title + ' due to optout. \033[0m\n')
-            errors.append('ERROR: ' + event_id + ' : "' + title + '" : Ignored due to optout.')
+            sys.stderr.write(' \033[91mERROR: Ignoring ' + slug + ' due to optout. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + slug + '" : Ignored due to optout.')
             continue
 
         if not ignore_license and event.find('recording').find('license').text is None:
-            sys.stderr.write(' \033[91mERROR: ' + title + ' has empty recording license. \033[0m\n')
-            errors.append('ERROR: ' + event_id + ' : "' + title + '" : Empty recording license.')
+            sys.stderr.write(' \033[91mERROR: ' + slug + ' has empty recording license. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + slug + '" : Empty recording license.')
             continue
 
         # request recording from voctoweb aka media.ccc.de
@@ -87,7 +87,7 @@ def main():
             recording = find_recoding(event.attrib['guid'])
             file_url = recording['recording_url']
         except:
-            sys.stderr.write(' INFO: Using alternative video repository (live.ber.c3voc.de).\n')
+            sys.stderr.write(' INFO: ' + slug + ' : Using alternative video repository (live.ber.c3voc.de).\n')
             file_url = 'http://live.ber.c3voc.de/releases/{}/{}-hd.mp4'.format(acronym, event_id)
 
         # open file url
@@ -101,14 +101,14 @@ def main():
             #print(mime_type)
             if mime_type != 'video/mp4':
                 shutil.rmtree(download_path)
-                sys.stderr.write(' \033[91mERROR: ' + title + ' : Video is not valid mp4. \033[0m\n')
-                errors.append('ERROR: ' + event_id + ' : "' + title + '" : Video is not valid mp4.')
+                sys.stderr.write(' \033[91mERROR: ' + slug + ' : Video is not valid mp4. \033[0m\n')
+                errors.append('ERROR: ' + event_id + ' : "' + slug + '" : Video is not valid mp4.')
                 continue
         except:
             if os.path.exists(download_path):
                 shutil.rmtree(download_path)
-            sys.stderr.write(' \033[91mERROR: HTTPError ocurred. \033[0m\n')
-            errors.append('ERROR: ' + event_id + ' : "' + title + '" : HTTPError ocurred.')
+            sys.stderr.write(' \033[91mERROR: ' + slug + ' : HTTPError ocurred. \033[0m\n')
+            errors.append('ERROR: ' + event_id + ' : "' + slug + '" : HTTPError ocurred.')
             continue
 
         # format person names to library conventions – random search result:
@@ -139,27 +139,28 @@ def main():
         else:
             lang = ''
 
+        # no escaping for abstract, will be placed in <![CDATA[]]>
         abstract = ''
         try:
-            abstract = escape_html_sc(event, 'abstract')
+            abstract = event.find('abstract').text.encode('utf-8').strip()
         except:
             try:
                 # use description when abstract is empty
-                abstract = escape_html_sc(event, 'description')
+                abstract = event.find('description').text.encode('utf-8').strip()
             except:
-                sys.stderr.write(' \033[91mWARNING: ' + title + ' has empty abstract. \033[0m\n')
+                sys.stderr.write(' \033[91mWARNING: ' + slug + ' has empty abstract. \033[0m\n')
 
         track = ''
         try:
             track = escape_html_sc(event, 'track')
         except:
-            sys.stderr.write(' \033[91mWARNING: Track not found. \033[0m\n')
+            sys.stderr.write(' \033[91mWARNING: ' + slug + ' : Track not found. \033[0m\n')
 
         links = []
         try:
             links = event.find('links')
         except:
-            sys.stderr.write(' \033[91mWARNING: Links not found. \033[0m\n')
+            sys.stderr.write(' \033[91mWARNING: ' + slug + ' : Links not found. \033[0m\n')
 
         with open(download_dir + '/{0}/{0}.xml'.format(slug), 'wt') as f:
             # TODO: Test if XML generation via external library e.g. via LXML produces nicer code
@@ -170,8 +171,9 @@ def main():
             <titles><title language="''' + lang + '''">''' + title + '''</title>
             <title titleType="Subtitle" language="''' + lang + '''">''' + subtitle + '''</title></titles>
             <creators>''' + '\n    '.join(
-                ['<creator><creatorName>{}</creatorName></creator>'.format(p.encode('utf-8').strip()) for p in
-                 persons]) + '''</creators><language>''' + lang + '''</language><genre>Conference</genre>'''
+                ['<creator><creatorName>{}</creatorName></creator>'.format(cgi.escape(p.encode('utf-8').strip()))
+                 for p in persons])\
+                       + '''</creators><language>''' + lang + '''</language><genre>Conference</genre>'''
 
             if abstract:
                 metadata = metadata \
@@ -180,7 +182,6 @@ def main():
                            + abstract + ''']]></description></descriptions>'''
 
             metadata = metadata + '''<additionalMaterials>'''
-
             if material is not None:
                 metadata = metadata + '\n    '.join([
                     '<additionalMaterial additionalMaterialType="{a[0]}" additionalMaterialTitle="{a[1]}" relationType="isSupplementedBy">{a[2]}</additionalMaterial>'.format(
@@ -188,15 +189,14 @@ def main():
             if links is not None:
                 metadata = metadata + '\n    '.join([
                     '<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="{0}" relationType="isSupplementedBy">{1}</additionalMaterial>'.format(
-                        cgi.escape(a.text.encode('utf-8').strip().replace('"', '')), (a.attrib['href']).encode('utf-8').strip()) for a in links])
-
-            metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/''' +\
-                       slug + '''</additionalMaterial>'''
-
+                        cgi.escape(a.text.encode('utf-8').strip().replace('"', '')), cgi.escape((a.attrib['href']).encode('utf-8').strip())) for a in links])
+            metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/'''\
+                       + cgi.escape(slug) + '''</additionalMaterial>'''
             if link != '':
-                metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="fahrplan.events.ccc.de" relationType="isCitedBy">''' + link + '''</additionalMaterial>'''
-
+                metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="fahrplan.events.ccc.de" relationType="isCitedBy">'''\
+                           + link + '''</additionalMaterial>'''
             metadata = metadata + '''</additionalMaterials>
+            
             <keywords><keyword language="''' + lang + '''">''' + track + '''</keyword></keywords>
             <publishers><publisher><publisherName>Chaos Computer Club e.V.</publisherName></publisher></publishers>
             <publicationYear>2017</publicationYear></resource>'''

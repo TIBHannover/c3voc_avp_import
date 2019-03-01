@@ -187,7 +187,7 @@ if __name__ == '__main__':
                 try:
                     ul.retrieve(url, download_dir + '/')
                 except IOError:
-                    sys.stderr.write('cannot download ' + url)
+                    sys.stderr.write('cannot download ' + url + '\n')
         elif pdf_count == 1:
             try:
                 print('trying to download: ' + download_urls[0])
@@ -197,7 +197,7 @@ if __name__ == '__main__':
                     os.mkdir(download_dir + '/' + filename)
                 ul.retrieve(download_urls[0], download_dir + '/' + filename + '/_' + filename + '_.pdf')
             except IOError:
-                sys.stderr.write('cannot download ' + download_urls[0])
+                sys.stderr.write('cannot download ' + download_urls[0] + '\n')
         else:
             print('     slides pdf missing!')
 
