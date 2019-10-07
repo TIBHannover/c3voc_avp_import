@@ -83,8 +83,9 @@ def main():
             continue
 
         # request recording from voctoweb aka media.ccc.de
+        guid = event.attrib['guid']
         try:
-            recording = find_recoding(event.attrib['guid'])
+            recording = find_recoding(guid)
             file_url = recording['recording_url']
         except:
             sys.stderr.write(' INFO: ' + slug + ' : Using alternative video repository (live.ber.c3voc.de).\n')
@@ -166,8 +167,8 @@ def main():
             # TODO: Test if XML generation via external library e.g. via LXML produces nicer code
             metadata = '''<?xml version="1.0" encoding="UTF-8" ?>
             <resource xmlns="http://www.tib.eu/fileadmin/extern/knm/NTM-Metadata-Schema_v_2.2.xsd">
-            <alternateIdentifiers><alternateIdentifier alternateIdentifierType="local-frab-event-id">''' \
-                       + event_id + '''</alternateIdentifier></alternateIdentifiers>
+            <alternateIdentifiers><alternateIdentifier alternateIdentifierType="event-guid">''' \
+                       + guid + '''</alternateIdentifier></alternateIdentifiers>
             <titles><title language="''' + lang + '''">''' + title + '''</title>
             <title titleType="Subtitle" language="''' + lang + '''">''' + subtitle + '''</title></titles>
             <creators>''' + '\n    '.join(
