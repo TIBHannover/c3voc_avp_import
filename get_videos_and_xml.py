@@ -4,6 +4,8 @@
 import argparse
 import cgi
 import json
+import re
+
 import magic
 import os
 import shutil
@@ -194,8 +196,16 @@ def main():
             metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="media.ccc.de" relationType="isCitedBy">https://media.ccc.de/v/'''\
                        + cgi.escape(slug) + '''</additionalMaterial>'''
             if link != '':
-                metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" additionalMaterialTitle="fahrplan.events.ccc.de" relationType="isCitedBy">'''\
-                           + link + '''</additionalMaterial>'''
+                r = re.search('(https?://)((\w+\.)+\w+)?(/\S+)?', link)
+                try:
+                    additional_material_title_link = r.group(2)
+                except IndexError:
+                    sys.stderr.write(' \033[91mWARNING: ' + slug + ' : Link for additional material title could not be extracted. \033[0m\n')
+                if additional_material_title_link is None or additional_material_title_link == '':
+                    sys.stderr.write(' \033[91mWARNING: ' + slug + ' : Link for additional material title is empty and won\'t be added. \033[0m\n')
+                else:
+                    additional_material_title_link = '''additionalMaterialTitle="''' + additional_material_title_link + '''" '''
+                    metadata = metadata + '''<additionalMaterial additionalMaterialType="URL" ''' + additional_material_title_link + '''relationType="isCitedBy">''' + link + '''</additionalMaterial>'''
             metadata = metadata + '''</additionalMaterials>
             
             <keywords><keyword language="''' + lang + '''">''' + track + '''</keyword></keywords>
