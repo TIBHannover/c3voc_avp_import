@@ -169,8 +169,7 @@ def main():
             # TODO: Test if XML generation via external library e.g. via LXML produces nicer code
             metadata = '''<?xml version="1.0" encoding="UTF-8" ?>
             <resource xmlns="http://www.tib.eu/fileadmin/extern/knm/NTM-Metadata-Schema_v_2.2.xsd">
-            <alternateIdentifiers><alternateIdentifier alternateIdentifierType="event-guid">''' \
-                       + guid + '''</alternateIdentifier></alternateIdentifiers>
+            <externalLocalID externalLocalIDType="local-frab-event-id">''' + guid + '''</externalLocalID>
             <titles><title language="''' + lang + '''">''' + title + '''</title>
             <title titleType="Subtitle" language="''' + lang + '''">''' + subtitle + '''</title></titles>
             <creators>''' + '\n    '.join(
