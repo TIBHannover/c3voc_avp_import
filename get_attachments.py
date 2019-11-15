@@ -14,6 +14,8 @@ from datetime import datetime
 import requests
 from lxml import etree
 
+from config import MAX_FILENAME_SIZE
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -180,21 +182,23 @@ if __name__ == '__main__':
                     print('   ignoring: ' + basename)
                 continue
 
+        filename = attachments.xpath('../slug')[0].text.strip()[:MAX_FILENAME_SIZE]
+        if pdf_count > 0 and not os.path.exists(download_dir + '/' + filename):
+            os.mkdir(download_dir + '/' + filename)
+
         if pdf_count > 1:
             print('     WARNING: multiple (%d) pdf files' % pdf_count)
             print('TARGET ' + download_dir)
             for url in download_urls:
+                pdfname = url[url.rindex('/')+1:-4][:MAX_FILENAME_SIZE]
                 try:
-                    ul.retrieve(url, download_dir + '/')
+                    ul.retrieve(url, download_dir + '/' + filename + '/_' + pdfname + '_.pdf')
                 except IOError:
                     sys.stderr.write('cannot download ' + url + '\n')
         elif pdf_count == 1:
             try:
                 print('trying to download: ' + download_urls[0])
-                filename = attachments.xpath('../slug')[0].text.strip()
-                print(filename)
-                if not os.path.exists(download_dir + '/' + filename):
-                    os.mkdir(download_dir + '/' + filename)
+
                 ul.retrieve(download_urls[0], download_dir + '/' + filename + '/_' + filename + '_.pdf')
             except IOError:
                 sys.stderr.write('cannot download ' + download_urls[0] + '\n')

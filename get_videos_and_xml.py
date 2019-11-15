@@ -17,6 +17,8 @@ import lxml.html
 import lxml.html.clean
 import requests
 
+from config import MAX_FILENAME_SIZE
+
 parser = argparse.ArgumentParser(description='TIB AV Portal: Upload and metadata generation ')
 parser.add_argument('schedule', help='schedule.xml file name', default='schedule.xml')
 parser.add_argument('--verbose', '-v', action='store_true', default=False)
@@ -46,6 +48,7 @@ def main():
     for event_id in schedule.xpath(u'day/room/event/@id'):
         event = schedule.xpath('day/room/event[@id="' + event_id + '"]')[0]
         slug = event.find('slug').text.encode('utf-8').strip()  # slug will be escaped below in xml
+        slug_short = slug[0:MAX_FILENAME_SIZE]
 
         title = ''
         try:
@@ -94,11 +97,11 @@ def main():
             file_url = 'http://live.ber.c3voc.de/releases/{}/{}-hd.mp4'.format(acronym, event_id)
 
         # open file url
-        download_path = download_dir + '/{0}'.format(slug)
+        download_path = download_dir + '/{0}'.format(slug_short)
         try:
             if not os.path.exists(download_path):
                 os.mkdir(download_path)
-            video_filename = download_dir + '/{0}/{0}.mp4'.format(slug)
+            video_filename = download_dir + '/{0}/{0}.mp4'.format(slug_short)
             urllib.urlretrieve(file_url, video_filename)
             mime_type = mime.from_file(video_filename)
             #print(mime_type)
@@ -131,8 +134,11 @@ def main():
 
         # see https://github.com/voc/scripts/blob/master/slides/get_attachments.py
         material = []
-        if os.path.isfile(download_dir + '/{0}/_{0}_.pdf'.format(slug)):
-            material.append(('File', 'Slides as PDF', '_{}_.pdf'.format(slug)))
+        pdfs = [f for f in os.listdir(download_path) if os.path.isfile(f) and mime.from_file(f) == 'application/pdf']
+        if pdfs is not None and len(pdfs) > 0:
+            for pdf in pdfs:
+                pdf_formatted = pdf[:-4] + '.pdf'  # extension is already checked in get_attachments.py
+                material.append(('File', 'Slides as PDF', pdf_formatted))
 
         lang = event.find('language').text
         if lang == 'en':
@@ -165,7 +171,7 @@ def main():
         except:
             sys.stderr.write(' \033[91mWARNING: ' + slug + ' : Links not found. \033[0m\n')
 
-        with open(download_dir + '/{0}/{0}.xml'.format(slug), 'wt') as f:
+        with open(download_dir + '/{0}/{0}.xml'.format(slug_short), 'wt') as f:
             # TODO: Test if XML generation via external library e.g. via LXML produces nicer code
             metadata = '''<?xml version="1.0" encoding="UTF-8" ?>
             <resource xmlns="http://www.tib.eu/fileadmin/extern/knm/NTM-Metadata-Schema_v_2.2.xsd">
