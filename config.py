@@ -1,2 +1,2 @@
 # Filename limit
-MAX_FILENAME_SIZE = 50
+MAX_FILENAME_SIZE = 40
